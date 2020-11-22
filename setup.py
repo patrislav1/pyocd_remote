@@ -35,7 +35,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'pyocd_remote=pyocd_remote:__main__',
+            'pyocd_remote=pyocd_remote.pyocd_remote:main',
         ],
     },
     python_requires='>=3.6'
