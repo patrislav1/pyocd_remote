@@ -13,8 +13,7 @@ import argparse
 import sys
 import os
 
-PYOCD_CMD = ['python3', '-m', 'pyocd']
-FILES_LIST = ['pyocd.yml', 'SAM4L.pack.zip']
+PYOCD_CMD = ['pyocd']
 
 def ssh_connect(ssh_user, remote_host, remote_port):
     ssh = SSHClient()
@@ -23,11 +22,9 @@ def ssh_connect(ssh_user, remote_host, remote_port):
     return ssh
 
 
-def scp_files(ssh, opt=None):
+def scp_files(ssh, file_list):
     scp = SCPClient(ssh.get_transport())
-    scp.put(FILES_LIST)
-    if opt:
-        scp.put(opt)
+    scp.put(file_list)
     scp.close()
 
 
@@ -106,7 +103,8 @@ def pyocd_remote(ssh_user, remote_host, remote_ssh_port, pyocd_args):
         tunnel = tunnel_create(ssh_user, remote_host, remote_ssh_port, [gdb_port, telnet_port])
 
     ssh = ssh_connect(ssh_user, remote_host, remote_ssh_port)
-    scp_files(ssh, opt=fpath)
+    if fpath:
+        scp_files(fpath)
     pyocd_run(ssh, pyocd_args, tunnel)
     ssh.close()
 
