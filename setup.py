@@ -14,7 +14,7 @@ packages=setuptools.find_packages(include=['pyocd_remote'])
 
 setuptools.setup(
     name='pyocd_remote',
-    version='0.1.0',
+    version='0.2.0',
     author='Patrick Huesmann',
     author_email='info@patrick-huesmann.de',
     url='https://github.com/patrislav1/pyocd_remote',
