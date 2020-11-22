@@ -113,11 +113,17 @@ def pyocd_remote(ssh_user, remote_host, remote_ssh_port, pyocd_args):
 
 def main():
     # Don't use argparse - we want to pass args transparently to pyocd
-    if len(sys.argv) < 5:
-        print(f'usage: {sys.argv[0]} ssh_user remote_host remote_ssh_port pyocd_args', file=sys.stderr)
+    if len(sys.argv) < 2:
+        print(f'usage: {sys.argv[0]} user@host:port pyocd_args', file=sys.stderr)
         sys.exit(-1)
 
-    pyocd_remote(sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4:])
+    ssh_args, pyocd_args = sys.argv[1], sys.argv[2:]
+
+    # Default to current user and port 22 if those parameters are not given
+    ssh_user, ssh_args = ssh_args.split('@') if '@' in ssh_args else (os.getlogin(), ssh_args)
+    ssh_host, ssh_port = ssh_args.split(':') if ':' in ssh_args else (ssh_args, 22)
+
+    pyocd_remote(ssh_user, ssh_host, int(ssh_port), pyocd_args)
 
 if __name__ == '__main__':
     main()
