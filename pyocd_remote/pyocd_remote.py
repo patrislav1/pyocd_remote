@@ -70,6 +70,8 @@ def pyocd_remote(ssh_user, remote_host, remote_ssh_port, pyocd_args):
         i = pyocd_args.index('--cmd')
         pyocd_cmd = pyocd_args[i+1]
         del pyocd_args[i:i+2]
+    print(f'Running "{pyocd_cmd}" {pyocd_args} as user {ssh_user} on {remote_host}:{remote_ssh_port}')
+
     pyocd_cmd = pyocd_cmd.split(' ')
 
     fpath = None
