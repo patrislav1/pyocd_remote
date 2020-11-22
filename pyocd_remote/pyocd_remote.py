@@ -13,7 +13,7 @@ import argparse
 import sys
 import os
 
-PYOCD_CMD = ['pyocd']
+PYOCD_CMD_DEFAULT = 'python3 -m pyocd'
 
 def ssh_connect(ssh_user, remote_host, remote_port):
     ssh = SSHClient()
@@ -28,11 +28,8 @@ def scp_files(ssh, file_list):
     scp.close()
 
 
-def pyocd_run(ssh, args, tunnel):
-    if type(args) is not list:  
-        args = [args]
-
-    _, _, stderr = ssh.exec_command(' '.join(PYOCD_CMD + args))
+def pyocd_run(ssh, cmd, tunnel):
+    _, _, stderr = ssh.exec_command(' '.join(cmd))
 
     # Forward remote stderr to local stderr
     while True:
@@ -68,6 +65,13 @@ def tunnel_create(ssh_user, remote_host, remote_ssh_port, tunnel_ports):
 
 
 def pyocd_remote(ssh_user, remote_host, remote_ssh_port, pyocd_args):
+    pyocd_cmd = PYOCD_CMD_DEFAULT
+    if '--cmd' in pyocd_args:
+        i = pyocd_args.index('--cmd')
+        pyocd_cmd = pyocd_args[i+1]
+        del pyocd_args[i:i+2]
+    pyocd_cmd = pyocd_cmd.split(' ')
+
     fpath = None
 
     # If we want to flash, scp the file to remote and forward its basename to pyocd
@@ -104,15 +108,15 @@ def pyocd_remote(ssh_user, remote_host, remote_ssh_port, pyocd_args):
 
     ssh = ssh_connect(ssh_user, remote_host, remote_ssh_port)
     if fpath:
-        scp_files(fpath)
-    pyocd_run(ssh, pyocd_args, tunnel)
+        scp_files(ssh, fpath)
+    pyocd_run(ssh, pyocd_cmd + pyocd_args, tunnel)
     ssh.close()
 
 
 def main():
     # Don't use argparse - we want to pass args transparently to pyocd
     if len(sys.argv) < 2:
-        print(f'usage: {sys.argv[0]} user@host:port pyocd_args', file=sys.stderr)
+        print(f'usage: {sys.argv[0]} user@host:port [--cmd pyocd_executable] pyocd_args', file=sys.stderr)
         sys.exit(-1)
 
     ssh_args, pyocd_args = sys.argv[1], sys.argv[2:]
