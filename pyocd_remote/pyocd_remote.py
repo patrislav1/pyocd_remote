@@ -5,7 +5,7 @@ This file is part of pyocd_remote, https://github.com/patrislav1/pyocd_remote
 Copyright (C) 2020 Patrick Huesmann <info@patrick-huesmann.de>
 """
 
-from paramiko import SSHClient
+from paramiko import SSHClient, SSHConfig
 from scp import SCPClient
 from sshtunnel import SSHTunnelForwarder
 
@@ -122,11 +122,29 @@ def pyocd_cli(args):
 
     ssh_args, pyocd_args = args[1], args[2:]
 
-    # Default to current user and port 22 if those parameters are not given
-    ssh_user, ssh_args = ssh_args.split('@') if '@' in ssh_args else (os.getlogin(), ssh_args)
-    ssh_host, ssh_port = ssh_args.split(':') if ':' in ssh_args else (ssh_args, 22)
+    # Split user@host:port settings
+    ssh_user, ssh_args = ssh_args.split('@') if '@' in ssh_args else (None, ssh_args)
+    ssh_host, ssh_port = ssh_args.split(':') if ':' in ssh_args else (ssh_args, None)
 
-    pyocd_remote(ssh_user, ssh_host, int(ssh_port), pyocd_args)
+    # Get default host/port/user settings from ssh config file
+    ssh_config = SSHConfig()
+    user_config_file = os.path.expanduser("~/.ssh/config")
+    if os.path.exists(user_config_file):
+        with open(user_config_file) as f:
+            ssh_config.parse(f)
+
+    cfg = {'hostname': ssh_host, 'user': ssh_user, 'port': ssh_port}
+    cfg_default = {'user': os.getlogin(), 'port': 22}
+
+    user_config = ssh_config.lookup(cfg['hostname'])
+    for k in ('hostname', 'user', 'port'):
+        if k in user_config:
+            cfg[k] = user_config[k]
+        if cfg[k] is None:
+            cfg[k] = cfg_default[k]
+
+
+    pyocd_remote(cfg['user'], cfg['hostname'], int(cfg['port']), pyocd_args)
 
 def main():
     pyocd_cli(sys.argv)
